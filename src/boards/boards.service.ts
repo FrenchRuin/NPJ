@@ -7,9 +7,13 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class BoardsService {
   constructor(
-    @Inject('BOARD_REPOSITORY')
+    @Inject('BOARD_REPOSITORY') // cause Deprecated
     private boardRepository: Repository<Board>,
   ) {}
+
+  async getAllBoards(): Promise<Board[]> {
+    return await this.boardRepository.find();
+  }
 
   async getBoardById(id: number): Promise<Board> {
     const board = await this.boardRepository.findOne({
@@ -30,6 +34,20 @@ export class BoardsService {
       description,
       status: BoardStatus.PUBLIC,
     });
+    await this.boardRepository.save(board);
+    return board;
+  }
+
+  async deleteBoard(id: number): Promise<void> {
+    const result = await this.boardRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Board with id ${id} not found`);
+    }
+  }
+
+  async updateBoardStatus(id: number, status: BoardStatus): Promise<Board> {
+    const board = await this.getBoardById(id);
+    board.status = status; // ok
     await this.boardRepository.save(board);
     return board;
   }
